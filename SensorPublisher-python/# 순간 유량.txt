@@ -1,0 +1,43 @@
+# 순간 유량
+addr0102 = safe_read_registers(water_client, 1, 2, unit=1, label="순간유량")
+inst_flow = to_float(addr0102[0], addr0102[1])
+
+# 순방향 누적 유량
+addr0304 = safe_read_registers(water_client, 3, 2, unit=1, label="순유량")
+pos_sum_data = to_long(addr0304[0], addr0304[1])
+
+# 역방향 누적 유량
+addr0506 = safe_read_registers(water_client, 5, 2, unit=1, label="역유량")
+neg_sum_data = to_long(addr0506[0], addr0506[1])
+
+# 순방향 소수점 유량
+addr0708 = safe_read_registers(water_client, 7, 2, unit=1, label="순유량 소수점")
+pos_dec_data = to_float(addr0708[0], addr0708[1])
+
+# 역방향 소수점 유량
+addr0910 = safe_read_registers(water_client, 9, 2, unit=1, label="역유량 소수점")
+neg_dec_data = to_float(addr0910[0], addr0910[1])
+
+data_water = {
+    "date": sensor_date,
+    "section": section,
+    "floor": floor,
+    "inst_flow": inst_flow,
+    "neg_dec_data": neg_dec_data,
+    "neg_sum_data": neg_sum_data,
+    "pos_dec_data": pos_dec_data,
+    "pos_sum_data": pos_sum_data,
+    # plain은 TUF-2000B에서 별도 제공하지 않을 수 있으므로 필요하면 계산
+    "plain_dec_data": 0.0,
+    "plain_sum_data": 0,
+    "today_value": 0.0  # 오늘 누적값이 별도로 제공되지 않는다면 계산 필요
+}
+
+
+for addr in range(1, 15, 2):  # TUF-2000B는 일반적으로 홀수 주소 사용
+    try:
+        result = water_client.read_holding_registers(address=addr, count=2, unit=1)
+        print("Address: {}, Registers: {}".format(addr, result.registers))
+    except Exception as e:
+        print("Address {} 읽기 실패: {}".format(addr, e))
+
